@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tic-Tac-Toe</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="game-container">
+        <h1 id="status">Player X's Turn</h1>
+        <div class="board" id="board"></div>
+        <button onclick="resetGame()">Restart Game</button>
+    </div>
+    <script>
+        const boardEl = document.getElementById('board');
+        for (let i = 0; i < 9; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.onclick = () => makeMove(i);
+            boardEl.appendChild(cell);
+        }
+
+        async function fetchState() {
+            const res = await fetch('/api/state');
+            const data = await res.json();
+            updateUI(data);
+        }
+
+        async function makeMove(index) {
+            const res = await fetch('/api/move', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ index })
+            });
+            const data = await res.json();
+            updateUI(data);
+        }
+
+        async function resetGame() {
+            const res = await fetch('/api/reset', { method: 'POST' });
+            const data = await res.json();
+            updateUI(data);
+        }
+
+        function updateUI(data) {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach((cell, idx) => {
+                cell.textContent = data.board[idx];
+            });
+            const status = document.getElementById('status');
+            if (data.winner) {
+                status.textContent = data.winner === 'Tie' ? "It's a Tie!" : `Player ${data.winner} Wins!`;
+            } else {
+                status.textContent = `Player ${data.currentPlayer}'s Turn`;
+            }
+        }
+        fetchState();
+    </script>
+</body>
+</html>
